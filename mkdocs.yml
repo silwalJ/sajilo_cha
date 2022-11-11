@@ -3,7 +3,7 @@ site_description: Its all about a Weissman score > 5.0
 repo_url: https://github.com/silwalJ/sajilo_cha
 site_dir: site
 copyright: Copyright &copy; 2020, <a href="https://github.com/silwalJ">silwalJ</a>.
-dev_addr: 0.0.0.0:8001
+dev_addr: 0.0.0.0:8000
 
 nav:
   - Home: 'index.md'
