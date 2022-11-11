@@ -3,8 +3,21 @@ from os.path import join
 from distutils.util import strtobool
 import dj_database_url
 from configurations import Configuration
+from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+import environ
+
+ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+# tlms/
+APPS_DIR = ROOT_DIR / "tlms"
+env = environ.Env()
+env.read_env(str(ROOT_DIR / ".env"))
+
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+if READ_DOT_ENV_FILE:
+    # OS environment variables take precedence over variables from .env
+    env.read_env(str(ROOT_DIR / ".env"))
 
 class Common(Configuration):
 
@@ -15,6 +28,7 @@ class Common(Configuration):
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
+        
 
 
         # Third party apps
@@ -24,6 +38,7 @@ class Common(Configuration):
 
         # Your apps
         'sajilo.users',
+        'sajilo.core',
 
     )
 
@@ -53,7 +68,7 @@ class Common(Configuration):
     # Postgres
     DATABASES = {
         'default': dj_database_url.config(
-            default='postgres://postgres:@postgres:5432/postgres',
+            default='postgres:///sajilo_cha',
             conn_max_age=int(os.getenv('POSTGRES_CONN_MAX_AGE', 600))
         )
     }
@@ -102,6 +117,8 @@ class Common(Configuration):
     # Set DEBUG to False as a default for safety
     # https://docs.djangoproject.com/en/dev/ref/settings/#debug
     DEBUG = strtobool(os.getenv('DJANGO_DEBUG', 'no'))
+
+    
 
     # Password Validation
     # https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation
@@ -199,3 +216,5 @@ class Common(Configuration):
             'rest_framework.authentication.TokenAuthentication',
         )
     }
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

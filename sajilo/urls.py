@@ -5,11 +5,9 @@ from django.contrib import admin
 from django.views.generic.base import RedirectView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken import views
-from .users.views import UserViewSet, UserCreateViewSet
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'users', UserCreateViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -22,3 +20,21 @@ urlpatterns = [
     re_path(r'^$', RedirectView.as_view(url=reverse_lazy('api-root'), permanent=False)),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Swagger URLS
+urlpatterns += [
+    # API base url
+    # DRF auth token
+    path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path(
+        "",
+        SpectacularSwaggerView.as_view(url_name="api-schema"),
+        name="api-docs",
+    ),
+]
+
+# API URLS
+urlpatterns += [
+    # API base url
+    path("api/v1/", include("sajilo.api.v1.urls", namespace="api_v1")),
+]

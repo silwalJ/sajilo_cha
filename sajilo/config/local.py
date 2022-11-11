@@ -1,7 +1,7 @@
 import os
 from .common import Common
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+from .common import env
 
 class Local(Common):
     DEBUG = True
@@ -23,3 +23,8 @@ class Local(Common):
     EMAIL_HOST = 'localhost'
     EMAIL_PORT = 1025
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+    SECRET_KEY = env(
+        "DJANGO_SECRET_KEY",
+        default="bwW661eOlSKqpjLYUJLxF50mbqIPReLv9dMpR8kHevF4RvBvoxrW8rLc4POYK1JK",
+    )
