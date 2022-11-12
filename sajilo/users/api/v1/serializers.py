@@ -10,7 +10,6 @@ from sajilo.users.models import (
 )
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers, status
-from .utils import check_user_login_attempt
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -20,20 +19,12 @@ class UserSerializer(serializers.ModelSerializer):
     """
     User Serializer
     """
-    user_id = serializers.CharField(read_only=True)
+    user_id = serializers.CharField(source="id", read_only=True)
 
     class Meta:
         model = User
         fields = ("user_id", "email", "status", "user_type")
 
-class PatientSerializer(serializers.ModelSerializer):
-    """
-    Patient Serializer
-    """
-
-    class Meta:
-        model = Patient
-        fields = "__all__"
 
 class CustomPermissionSerializers(serializers.Serializer):
     """
@@ -153,11 +144,52 @@ class RoleSerializer(serializers.Serializer):
 
         return instance
 
+class PatientSerializer(serializers.ModelSerializer):
+    """
+    Patient Serializer
+    """
+    patient_id = serializers.IntegerField(source="id", read_only=True)
+    first_name = serializers.CharField()
+    middle_name = serializers.CharField(allow_blank=True, allow_null=True)
+    last_name = serializers.CharField()
+    bio = serializers.CharField()
+    mobile_number = serializers.IntegerField()
+    dob = serializers.DateField()
+    religion = serializers.CharField()
+    blood_group = serializers.CharField()
+    gender = serializers.IntegerField()
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=True, write_only=True
+    )
+    user_details = UserSerializer(source="user", read_only=True)
+    role = serializers.PrimaryKeyRelatedField(
+        queryset=Role.objects.all(), required=True, write_only=True
+    )
+    role_details = RoleSerializer(source="role", read_only=True)
+    class Meta:
+        model = Patient
+        fields = [
+            "patient_id",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "mobile_number",
+            "bio",
+            "dob",
+            "religion",
+            "gender",
+            "blood_group",
+            'user',
+            'user_details',
+            'role',
+            'role_details'
+        ]
+
 class DoctorSerializer(serializers.ModelSerializer):
     """
     Doctor Serializer
     """
-    doctor_id = serializers.IntegerField(read_only=True)
+    doctor_id = serializers.IntegerField(source="id", read_only=True)
     first_name = serializers.CharField()
     middle_name = serializers.CharField(allow_blank=True, allow_null=True)
     last_name = serializers.CharField()
@@ -176,8 +208,7 @@ class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
         fields = [
-            "dcotor_id",
-            "email",
+            "doctor_id",
             "first_name",
             "middle_name",
             "last_name",
@@ -196,7 +227,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
    registration serializer for user
     """
 
-    user_id = serializers.IntegerField(read_only=True)
+    user_id = serializers.IntegerField(source="id", read_only=True)
     user_type = serializers.CharField(read_only=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
     first_name = serializers.CharField()
@@ -239,7 +270,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         license_no = self._kwargs["data"].pop_or_none("license_no")
         user_type = self._kwargs["data"].pop("user_type")
 
-        if user_type == USER_TYPE["PATIENT"] :
+        if user_type == USER_TYPE["1"] :
             user = User.objects.create(
                 email=self._kwargs["data"].pop("email"),
                 user_type=USER_TYPE["PATIENT"],
@@ -316,7 +347,7 @@ class DoctorTrainingHistorySerializer(serializers.Serializer):
     """
     Doctor Training History Serializer
     """
-    training_id = serializers.CharField(read_only=True)
+    training_id = serializers.CharField(source="id", read_only=True)
     name = serializers.CharField()
     from_date = serializers.DateField()
     to_date = serializers.DateField()
@@ -344,7 +375,7 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
    registration serializer for patient
     """
 
-    id = serializers.IntegerField(read_only=True)
+    registration_id = serializers.IntegerField(source="id", read_only=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
     first_name = serializers.CharField()
     middle_name = serializers.CharField(allow_blank=True, allow_null=True)
@@ -441,7 +472,7 @@ class DoctorTrainingHistorySerializer(serializers.Serializer):
     """
     Doctor Training History Serializer
     """
-    training_id = serializers.CharField(read_only=True)
+    training_id = serializers.CharField(source="id", read_only=True)
     name = serializers.CharField()
     from_date = serializers.DateField()
     to_date = serializers.DateField()
@@ -465,7 +496,7 @@ class DoctorTrainingHistorySerializer(serializers.Serializer):
         )
 
 class DoctorWorkExperienceSerializer(serializers.Serializer):
-    work_id = serializers.CharField(read_only=True)
+    work_id = serializers.CharField(source="id", read_only=True)
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), required=True, write_only=True
     )
@@ -495,7 +526,7 @@ class DoctorWorkExperienceSerializer(serializers.Serializer):
         )
 
 class Education(serializers.Serializer):
-    education_id = serializers.CharField(read_only=True)
+    education_id = serializers.CharField(source="id", read_only=True)
     degree = serializers.CharField()
     user = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), required=True, write_only=True
@@ -525,7 +556,7 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
     Trainee Serializer
     """
 
-    doctor_id = serializers.CharField(read_only=True)
+    doctor_id = serializers.CharField(source="id", read_only=True)
     confirm_password = serializers.CharField(write_only=True, required=True)
     first_name = serializers.CharField(required=True)
     middle_name = serializers.CharField()
@@ -643,11 +674,11 @@ class DoctorLoginSerializer(TokenObtainPairSerializer, serializers.ModelSerializ
         role = None
         try:
             doctor = Doctor.objects.get(user=user)
-            role = doctor.role
+            role = doctor.user__user_type
 
         except Exception as e:
             print(e)
-        token["role"] = role
+        token["user_type"] = role
 
         return token
 
@@ -661,8 +692,7 @@ class DoctorLoginSerializer(TokenObtainPairSerializer, serializers.ModelSerializ
         # email exist
         if not user:
             if User.objects.filter(email=email).exists():
-                check_user_login_attempt(User.objects.get(email=email))
-            errors["email"] = "Invalid Credential"
+                errors["email"] = "Invalid Credential"
 
         # Login Panel Verification
         elif not (user_type in ["1", "2"]):
@@ -678,8 +708,6 @@ class DoctorLoginSerializer(TokenObtainPairSerializer, serializers.ModelSerializ
         #         "invalid_link"
         #     ] = "Please register first"
 
-        
-       
         elif not user.is_superuser:
             if not user.status == "1":
                 errors["email"] = "Email not verified"
@@ -722,11 +750,11 @@ class PatientLoginSerializer(TokenObtainPairSerializer, serializers.ModelSeriali
         role = None
         try:
             patient = Patient.objects.get(user=user)
-            role = patient.role
+            role = patient.user__user_type
 
         except Exception as e:
             print(e)
-        token["role"] = role
+        token["user_type"] = role
 
         return token
 
@@ -737,11 +765,14 @@ class PatientLoginSerializer(TokenObtainPairSerializer, serializers.ModelSeriali
         user_type = attrs.get("user_type")
 
         user = authenticate(email=email, password=password)
+        if user:
+            user_type = user.user_type
+
+
         # email exist
         if not user:
             if User.objects.filter(email=email).exists():
-                check_user_login_attempt(User.objects.get(email=email))
-            errors["email"] = "Invalid Credential"
+                errors["email"] = "Invalid Credentials"
 
         # Login Panel Verification
         elif not (user_type in ["1", "2"]):
@@ -756,13 +787,17 @@ class PatientLoginSerializer(TokenObtainPairSerializer, serializers.ModelSeriali
         #     errors[
         #         "invalid_link"
         #     ] = "Please register first"
-
-        
        
         elif not user.is_superuser:
             if not user.status == "2":
                 errors["email"] = "Email not verified"
 
+        refresh = self.get_token(user)
+
+        response = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
         if errors:
             raise serializers.ValidationError(
                 {
@@ -771,12 +806,4 @@ class PatientLoginSerializer(TokenObtainPairSerializer, serializers.ModelSeriali
                     "errors": errors,
                 }
             )
-        user.save()
-
-        refresh = self.get_token(user)
-
-        response = {
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }
         return response

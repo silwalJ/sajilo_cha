@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from .helper import generate_key
 from .managers import CustomUserManager
 from sajilo.users.utils import generate_code
-from sajilo.core.models import TimeStampAbstractModel
+from sajilo.core.models import TimeStampAbstractModel, UserCreatedUpdatedBy
 
 USER_TYPE = [("1", "doctor"), ("2", "patient"), ("3", "super_user")]
 
@@ -74,9 +74,9 @@ class Role(TimeStampAbstractModel):
         return self.name
 
 
-class UserDocument(models.Model): 
+class UserDocument(UserCreatedUpdatedBy): 
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE, null=True, blank=True
+        User, on_delete=models.CASCADE, related_name="user_documents"
     )
     document_name = models.CharField(max_length=100, null=True, blank=True)
     document = models.FileField(upload_to="documents/", null=True, blank=True)
@@ -88,7 +88,7 @@ class UserDocument(models.Model):
     def __str__(self):
         return f"{self.document_name}"
 
-class Medicalhistory(models.Model):
+class Medicalhistory(UserCreatedUpdatedBy):
     medical_history = models.TextField(null=True, blank=True)
     allergies = models.TextField(null=True, blank=True)
     reports = models.ForeignKey(
@@ -111,17 +111,16 @@ class Patient(models.Model):
     mobile_number = models.CharField(max_length=20)
     user = models.OneToOneField(
         User, 
-        blank=True, 
         on_delete=models.CASCADE
     )
     bio = models.TextField(null=True, blank=True)
     medical_history = models.ForeignKey(
-        Medicalhistory, on_delete=models.SET_NULL, null=True, blank=True
+        Medicalhistory, on_delete=models.CASCADE, null=True, blank=True
     )
     role = models.ForeignKey(
-        Role, on_delete=models.SET_NULL, null=True, blank=True
+        Role, on_delete=models.CASCADE, null=True, blank=True
     )
-    dob_AD = models.DateField(null=True, blank=True)
+    dob = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER, null=True, blank=True)
     religion = models.CharField(max_length=255, null=True, blank=True)
     blood_group = models.CharField(
@@ -154,7 +153,7 @@ LOCATION_TYPE = [
     ("1", "Nepal"),
     ("2", "Foreign Country"),
 ]
-class DoctorTrainingHistory(TimeStampAbstractModel):
+class DoctorTrainingHistory(UserCreatedUpdatedBy):
     name = models.CharField(max_length=255)
     from_date = models.DateField(null=True, blank=True)
     to_date = models.DateField(null=True, blank=True)
@@ -165,7 +164,7 @@ class DoctorTrainingHistory(TimeStampAbstractModel):
     )
 
 
-class DoctorWorkExperience(TimeStampAbstractModel):
+class DoctorWorkExperience(UserCreatedUpdatedBy):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True
     )
@@ -179,7 +178,7 @@ class DoctorWorkExperience(TimeStampAbstractModel):
     is_current_service = models.BooleanField(default=False)
 
 
-class Education(models.Model):
+class Education(UserCreatedUpdatedBy):
     degree = models.CharField(max_length=255)
     institution_name = models.CharField(max_length=400, null=True, blank=True)
     percentage = models.FloatField(null=True)
@@ -187,6 +186,13 @@ class Education(models.Model):
     level = models.CharField(max_length=100, null=True)
     educational_file = models.FileField(
         upload_to="educational_files/", null=True, blank=True
+    )
+class DoctorEducation(UserCreatedUpdatedBy):
+    user = models.ForeignKey(
+        "Doctor", on_delete=models.CASCADE, related_name="admin_education"
+    )
+    education = models.ForeignKey(
+        Education, on_delete=models.CASCADE, related_name="education_related"
     )
 
 class Doctor(models.Model):
@@ -196,9 +202,7 @@ class Doctor(models.Model):
     mobile_number = models.CharField(max_length=20, null=True, blank=True)
     user = models.OneToOneField(
         User,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True
+        on_delete=models.CASCADE
     )
     license_no = models.CharField(max_length=100)
     dob = models.DateField(blank=True, null=True, verbose_name="Date of Birth")

@@ -66,8 +66,7 @@ class Common(Configuration):
 
     # Postgres
     DATABASES = {
-        'default': dj_database_url.config(
-            default='postgres:///sajilo_cha',
+        'default': dj_database_url.parse(os.environ.get('DATABASE_URL'),
             conn_max_age=int(os.getenv('POSTGRES_CONN_MAX_AGE', 600))
         )
     }
