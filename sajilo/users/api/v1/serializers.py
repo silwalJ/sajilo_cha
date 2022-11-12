@@ -1,5 +1,6 @@
 from sajilo.users.models import (
-    USER_TYPE, 
+    USER_TYPE,
+    CustomPermission, 
     Doctor, 
     DoctorTrainingHistory, 
     DoctorWorkExperience, 
@@ -19,12 +20,11 @@ class UserSerializer(serializers.ModelSerializer):
     """
     User Serializer
     """
-
     user_id = serializers.CharField(read_only=True)
 
     class Meta:
         model = User
-        fields = ("id", "email", "status", "user_type")
+        fields = ("user_id", "email", "status", "user_type")
 
 class PatientSerializer(serializers.ModelSerializer):
     """
@@ -35,14 +35,161 @@ class PatientSerializer(serializers.ModelSerializer):
         model = Patient
         fields = "__all__"
 
+class CustomPermissionSerializers(serializers.Serializer):
+    """
+    Used for create, update, delete and list the permission
+    """
+
+    id = serializers.IntegerField(read_only=True, help_text="id serializer help text")
+    name = serializers.CharField(max_length=100)
+    description = serializers.CharField(max_length=200)
+    key = serializers.SlugField(read_only=True)
+
+    class Meta:
+        model = CustomPermission
+        fields = ["id", "name", "description", "key"]
+
+        extra_kwargs = {
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def create(self, validated_data):
+        errors = {}
+        if CustomPermission.objects.filter(name=validated_data["name"]).exists():
+            errors["name"] = "Already exit permission"
+
+        if errors:
+            raise serializers.ValidationError(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "errors": errors,
+                }
+            )
+        permission = CustomPermission.objects.create(**validated_data)
+
+        return permission
+
+    def update(self, instance, validated_data):
+        errors = {}
+        instance.name = validated_data.get("name", instance.name)
+        instance.description = validated_data.get("description", instance.description)
+        if errors:
+            raise serializers.ValidationError(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "errors": errors,
+                }
+            )
+        instance.save()
+        return instance
+
+
+class RoleSerializer(serializers.Serializer):
+    """
+    Used for create, update, delete and list the role.
+    Permission must be choose from existed permission in system.
+    """
+
+    id = serializers.IntegerField(read_only=True, help_text="id serializer help text")
+    name = serializers.CharField(max_length=100)
+    desc = serializers.CharField(max_length=200)
+    permission_to_role = serializers.ListField(
+        child=serializers.PrimaryKeyRelatedField(
+            queryset=CustomPermission.objects.all(), write_only=True
+        ),
+        write_only=True,
+    )
+    permission = CustomPermissionSerializers(
+        source="permission_to_role", read_only=True, many=True
+    )
+
+    class Meta:
+        model = Role
+        fields = ["id", "name", "desc", "permission_to_role", "permission", "user"]
+        extra_kwargs = {
+            "created_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+        }
+
+    def create(self, validated_data):
+        errors = {}
+        if Role.objects.filter(name=validated_data["name"]).exists():
+            errors["name"] = "Role already exists."
+
+        permission = validated_data.pop("permission_to_role")
+        if errors:
+            raise serializers.ValidationError(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "errors": errors,
+                }
+            )
+        role = Role.objects.create(**validated_data)
+
+        role.permission_to_role.set(permission)
+
+        return role
+
+    def update(self, instance, validated_data):
+        errors = {}
+        permission = validated_data.pop("permission_to_role")
+        instance.name = validated_data.get("name", instance.name)
+        instance.desc = validated_data.get("desc", instance.desc)
+        if errors:
+            raise serializers.ValidationError(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "errors": errors,
+                }
+            )
+        instance.save()
+        instance.permission_to_role.clear()
+        instance.permission_to_role.set(permission)
+
+        return instance
+
 class DoctorSerializer(serializers.ModelSerializer):
     """
     Doctor Serializer
     """
-
+    doctor_id = serializers.IntegerField(read_only=True)
+    first_name = serializers.CharField()
+    middle_name = serializers.CharField(allow_blank=True, allow_null=True)
+    last_name = serializers.CharField()
+    mobile_number = serializers.IntegerField()
+    dob = serializers.DateField()
+    license_no = serializers.CharField()
+    gender = serializers.IntegerField()
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), required=True, write_only=True
+    )
+    user_details = UserSerializer(source="user", read_only=True)
+    role = serializers.PrimaryKeyRelatedField(
+        queryset=Role.objects.all(), required=True, write_only=True
+    )
+    role_details = RoleSerializer(source="role", read_only=True)
     class Meta:
         model = Doctor
-        fields = "__all__"
+        fields = [
+            "dcotor_id",
+            "email",
+            "first_name",
+            "middle_name",
+            "last_name",
+            "mobile_number",
+            "dob",
+            "license_no",
+            "gender",
+            'user',
+            'user_details',
+            'role',
+            'role_details'
+        ]
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """
@@ -92,7 +239,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         license_no = self._kwargs["data"].pop_or_none("license_no")
         user_type = self._kwargs["data"].pop("user_type")
 
-        if user_type == "PATIENT" :
+        if user_type == USER_TYPE["PATIENT"] :
             user = User.objects.create(
                 email=self._kwargs["data"].pop("email"),
                 user_type=USER_TYPE["PATIENT"],

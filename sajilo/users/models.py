@@ -26,7 +26,7 @@ BLOOD_GROUP = [
 ]
 
 class User(AbstractUser, TimeStampAbstractModel):
-    """Default user for tlms."""
+    """Default user."""
 
     email = models.EmailField(_("Email Address"), unique=True, null=True, blank=True)
 
@@ -74,7 +74,6 @@ class Role(TimeStampAbstractModel):
         return self.name
 
 
-"""For staff users"""
 class UserDocument(models.Model): 
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, null=True, blank=True
@@ -106,7 +105,6 @@ class Medicalhistory(models.Model):
 
 
 class Patient(models.Model):
-
     first_name = models.CharField(max_length=100)
     middle_name = models.CharField(max_length=100, null=True, blank=True)
     last_name = models.CharField(max_length=100)
@@ -129,7 +127,7 @@ class Patient(models.Model):
     blood_group = models.CharField(
         max_length=5, choices=BLOOD_GROUP, null=True, blank=True
     )
-    free_trail = models.BooleanField(default=False)
+    free_trial = models.BooleanField(default=False)
 
 
     def __str__(self):

@@ -1,11 +1,11 @@
 import os
 from .common import Common
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from .common import env
 
 class Local(Common):
     DEBUG = False
 
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     # Testing
     INSTALLED_APPS = Common.INSTALLED_APPS
     INSTALLED_APPS += ('django_nose',)
