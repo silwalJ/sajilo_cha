@@ -33,7 +33,7 @@ urlpatterns = [
         "request-attendance/delete/<int:pk>/",
         DestroyAppointmentView.as_view(),
         name="delete_request-attendance",
-    )
+    ),
 ]
 
 urlpatterns += router.urls

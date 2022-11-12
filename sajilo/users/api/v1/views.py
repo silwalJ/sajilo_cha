@@ -6,6 +6,12 @@ from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.views import APIView
+from rest_framework.generics import (
+    CreateAPIView,
+    DestroyAPIView,
+    ListAPIView,
+    UpdateAPIView,
+)
 from sajilo.core.pagination import CustomPagination
 from django.contrib.auth import get_user_model
 
@@ -13,6 +19,7 @@ from django.contrib.auth import get_user_model
 from sajilo.users.api.v1.serializers import (
     DoctorSerializer,
     PatientSerializer,
+    RoleSerializer,
     UserRegistrationSerializer,
     DoctorLoginSerializer,
     PatientLoginSerializer,
@@ -175,18 +182,9 @@ class PatientUserList(APIView):
     serializer_class = PatientSerializer
 
     def get(self, request):
-        patient_users = Patient.objects.filter(
-            user__user_type=USER_TYPE["PATIENT"]
-        )
-        serializer = PatientSerializer(patient_users, many=True)
-        return Response(
-            {
-                "status": "success",
-                "statusCode": status.HTTP_200_OK,
-                "data": serializer.data,
-                "message": "All patient Users!",
-            },
-        )
+        patient = Patient.objects.all()
+        serializer = PatientSerializer(patient, many=True)
+        return Response(serializer.data)
 
 @extend_schema(
     operation_id="List doctor user master data",
@@ -201,3 +199,115 @@ class DoctorUserList(APIView):
         doctor = Doctor.objects.all()
         serializer = DoctorSerializer(doctor, many=True)
         return Response(serializer.data)
+
+@extend_schema(
+    operation_id="Update request attendance",
+    description="Update request attendance",
+    request=RoleSerializer,
+)
+class UpdateRoleView(UpdateAPIView):
+    """
+    This is a Role Update View.
+    """
+
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    http_method_names = ["patch"]
+
+    def partial_update(self, request, pk):
+        role = get_object_or_404(Role, pk=pk)
+        serializer = self.serializer_class(role, data=request.data, partial=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.update(role, serializer.validated_data)
+            return Response(
+                {
+                    "status": "success",
+                    "statusCode": status.HTTP_200_OK,
+                    "message": "Missed Role Updated Successfully",
+                    "data": serializer.data,
+                }
+            )
+
+
+@extend_schema(
+    operation_id="Role View API for Thumb",
+    description="For view the Role",
+    request=RoleSerializer,
+)
+class ListRoleView(ListAPIView):
+    """
+    This is a view to list all the attendance done.
+    """
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    pagination_class = CustomPagination
+
+    def list(self, request):
+        queryset = super().list(self, ListRoleView)
+        return Response(
+            {
+                "status": "Success",
+                "statusCode": status.HTTP_200_OK,
+                "data": queryset.data,
+                "message": "Role List",
+            }
+        )
+
+
+@extend_schema(
+    operation_id="Create Role API",
+    description=" For attendance create with check_in and check_out time.",
+    request=RoleSerializer,
+)
+class CreateRoleView(CreateAPIView):
+    """
+    This is to create the attendance.
+    """
+
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    permission_classes = []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(
+            data=request.data,
+            many=isinstance(request.data, list),
+        )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            {
+                "status": "success",
+                "statusCode": status.HTTP_201_CREATED,
+                "message": "Role Created Successfully",
+                "data": serializer.data,
+            }
+        )
+
+
+@extend_schema(
+    operation_id="Role Delete API",
+    description="For delete the Role",
+    request=RoleSerializer,
+)
+class DestroyRoleView(DestroyAPIView):
+    """
+    This is to delete the attendance View.
+    """
+
+    queryset = Role.objects.all()
+    serializer_class = RoleSerializer
+    # permission_classes = [AdminOnly]
+
+    def destroy(self, request, pk):
+        attend = get_object_or_404(Role, pk=pk)
+        attend.delete()
+        return Response(
+            {
+                "status": "success",
+                "statusCode": status.HTTP_204_NO_CONTENT,
+                "message": f"Role of {attend.user} Successfully Deleted",
+            }
+        )

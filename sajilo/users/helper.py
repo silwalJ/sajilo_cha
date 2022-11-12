@@ -12,7 +12,7 @@ def generate_random_string(N):
 
 def generate_key(text):
     new_key = slugify(text)
-    from users.models import CustomPermission
+    from sajilo.users.models import CustomPermission
 
     if CustomPermission.objects.filter(key=new_key).first():
         return generate_key(text + generate_random_string(6))
