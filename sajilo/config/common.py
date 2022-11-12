@@ -28,8 +28,7 @@ class Common(Configuration):
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
-        
-` `
+    
 
         # Third party apps
         'rest_framework',            # utilities for rest apis
@@ -76,10 +75,19 @@ class Common(Configuration):
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    STATIC_ROOT = os.path.normpath(os.path.join(BASE_DIR, 'staticfiles'))
-    STATICFILES_DIRS = (
-        os.path.join(BASE_DIR, 'static'),
-    )
+    # STATIC
+    # ------------------------------------------------------------------------------
+    # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
+    STATIC_ROOT = str(ROOT_DIR / "staticfiles")
+    # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
+    STATIC_URL = "/static/"
+    # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
+    STATICFILES_DIRS = [str(APPS_DIR / "static")]
+    # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
+    STATICFILES_FINDERS = [
+        "django.contrib.staticfiles.finders.FileSystemFinder",
+        "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    ]
     # General
     APPEND_SLASH = False
     TIME_ZONE = 'UTC'
