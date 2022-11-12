@@ -47,7 +47,7 @@ class Appointment(TimeStampAbstractModel):
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='appointments')
     date = models.DateField()
     time = models.TimeField()
-    status = models.CharField(max_length=1, choices=APPOINTMENT_STATUS, default='0')
+    status = models.CharField(max_length=1, choices=APPOINTMENT_STATUS, default='1')
 
     class Meta:
         db_table = 'appointment'

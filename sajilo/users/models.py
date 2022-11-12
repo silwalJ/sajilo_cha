@@ -39,6 +39,7 @@ class User(AbstractUser, TimeStampAbstractModel):
     REQUIRED_FIELDS = []
     user_type = models.CharField(max_length=1, choices=USER_TYPE, null=True)
     objects = CustomUserManager()
+    status = models.BooleanField(default=False)
 
     def __str__(self):
         return self.email
@@ -128,6 +129,8 @@ class Patient(models.Model):
     blood_group = models.CharField(
         max_length=5, choices=BLOOD_GROUP, null=True, blank=True
     )
+    free_trail = models.BooleanField(default=False)
+
 
     def __str__(self):
         return f"{self.first_name}  {self.last_name}"

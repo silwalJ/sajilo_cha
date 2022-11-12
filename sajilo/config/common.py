@@ -8,18 +8,18 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import environ
 
-ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-# tlms/
-APPS_DIR = ROOT_DIR / "tlms"
-env = environ.Env()
-env.read_env(str(ROOT_DIR / ".env"))
+class Common(Configuration):
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
-if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from .env
+    ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+    # sajilo_cha
+    APPS_DIR = ROOT_DIR / "sajilo"
+    env = environ.Env()
     env.read_env(str(ROOT_DIR / ".env"))
 
-class Common(Configuration):
+    READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+    if READ_DOT_ENV_FILE:
+    # OS environment variables take precedence over variables from .env
+        env.read_env(str(ROOT_DIR / ".env"))
 
     INSTALLED_APPS = (
         'django.contrib.admin',
@@ -28,8 +28,7 @@ class Common(Configuration):
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
-        
-
+    
 
         # Third party apps
         'rest_framework',            # utilities for rest apis
@@ -39,6 +38,7 @@ class Common(Configuration):
         # Your apps
         'sajilo.users',
         'sajilo.core',
+        'sajilo.appointment',
 
     )
 
@@ -51,6 +51,7 @@ class Common(Configuration):
         'django.contrib.auth.middleware.AuthenticationMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
+        'whitenoise.middleware.WhiteNoiseMiddleware',
     )
 
     ALLOWED_HOSTS = ["*"]
@@ -73,6 +74,23 @@ class Common(Configuration):
         )
     }
 
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    # STATIC
+    # ------------------------------------------------------------------------------
+    # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
+    STATIC_ROOT = str(ROOT_DIR / "staticfiles")
+    # https://docs.djangoproject.com/en/dev/ref/settings/#static-url
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
+    STATIC_HOST = os.environ.get("DJANGO_STATIC_HOST", "")
+    STATIC_URL = STATIC_HOST + "/static/"       
+    # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#std:setting-STATICFILES_DIRS
+    STATICFILES_DIRS = [str(APPS_DIR / "static")]
+    # https://docs.djangoproject.com/en/dev/ref/contrib/staticfiles/#staticfiles-finders
+    STATICFILES_FINDERS = [
+        "django.contrib.staticfiles.finders.FileSystemFinder",
+        "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    ]
     # General
     APPEND_SLASH = False
     TIME_ZONE = 'UTC'

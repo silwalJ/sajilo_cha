@@ -6,14 +6,16 @@ from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.views import APIView
+from sajilo.core.pagination import CustomPagination
 
 
 from sajilo.users.api.v1.serializers import (
     UserRegistrationSerializer,
     DoctorLoginSerializer,
     PatientLoginSerializer,
+    UserSerializer,
 )
-from sajilo.users.models import User
+from sajilo.users.models import Role, User
 
 class UserRegistrationView(CreateAPIView):
 
@@ -73,19 +75,25 @@ class DoctorLoginView(APIView):
             data=request.data, context={"request": request}
         )
         if serializer.is_valid():
-
+            
             return Response(
                 {
                     "status": "Success",
                     "statusCode": status.HTTP_200_OK,
                     "data": serializer.validated_data,
                     "message": "Login Successful",
-                    "user_type": request.data["user_type"],
                 }
             )
 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "data": serializer.data,
+                    "message": "something went wrong",
+                },
+            )
 
 
 class PatientLoginView(APIView):
@@ -130,4 +138,21 @@ class PatientLoginView(APIView):
             )
 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "data": serializer.data,
+                    "message": "something went wrong",
+                },
+            )
+
+@extend_schema(
+    operation_id="List all user master data",
+    description="List all user master data",
+    request=UserSerializer,
+)
+class UserDataList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    pagination_class = CustomPagination

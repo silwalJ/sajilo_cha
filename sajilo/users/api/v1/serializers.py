@@ -1,5 +1,12 @@
 from sajilo.users.models import (
-    USER_TYPE, Doctor, DoctorTrainingHistory, DoctorWorkExperience, Education, Patient, Role)
+    USER_TYPE, 
+    Doctor, 
+    DoctorTrainingHistory, 
+    DoctorWorkExperience, 
+    Education, 
+    Patient, 
+    Role
+)
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers, status
 from .utils import check_user_login_attempt
@@ -18,6 +25,24 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "email", "status", "user_type")
+
+class PatientSerializer(serializers.ModelSerializer):
+    """
+    Patient Serializer
+    """
+
+    class Meta:
+        model = Patient
+        fields = "__all__"
+
+class DoctorSerializer(serializers.ModelSerializer):
+    """
+    Doctor Serializer
+    """
+
+    class Meta:
+        model = Doctor
+        fields = "__all__"
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     """
@@ -381,7 +406,6 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validate_data):
         errors = {}
-        
         password = self._kwargs["data"].pop("password")
 
         confirm_password = self._kwargs["data"].pop("confirm_password")
