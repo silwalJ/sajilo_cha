@@ -29,7 +29,7 @@ class Common(Configuration):
         'django.contrib.messages',
         'django.contrib.staticfiles',
         
-
+` `
 
         # Third party apps
         'rest_framework',            # utilities for rest apis
@@ -39,6 +39,7 @@ class Common(Configuration):
         # Your apps
         'sajilo.users',
         'sajilo.core',
+        'sajilo.appointment',
 
     )
 

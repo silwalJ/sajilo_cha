@@ -73,19 +73,25 @@ class DoctorLoginView(APIView):
             data=request.data, context={"request": request}
         )
         if serializer.is_valid():
-
+            
             return Response(
                 {
                     "status": "Success",
                     "statusCode": status.HTTP_200_OK,
                     "data": serializer.validated_data,
                     "message": "Login Successful",
-                    "user_type": request.data["user_type"],
                 }
             )
 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "data": serializer.data,
+                    "message": "something went wrong",
+                },
+            )
 
 
 class PatientLoginView(APIView):
@@ -130,4 +136,11 @@ class PatientLoginView(APIView):
             )
 
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {
+                    "status": "fail",
+                    "statusCode": status.HTTP_400_BAD_REQUEST,
+                    "data": serializer.data,
+                    "message": "something went wrong",
+                },
+            )
