@@ -8,18 +8,18 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import environ
 
-ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-# tlms/
-APPS_DIR = ROOT_DIR / "tlms"
-env = environ.Env()
-env.read_env(str(ROOT_DIR / ".env"))
+class Common(Configuration):
 
-READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
-if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from .env
+    ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+    # sajilo_cha
+    APPS_DIR = ROOT_DIR / "sajilo"
+    env = environ.Env()
     env.read_env(str(ROOT_DIR / ".env"))
 
-class Common(Configuration):
+    READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+    if READ_DOT_ENV_FILE:
+    # OS environment variables take precedence over variables from .env
+        env.read_env(str(ROOT_DIR / ".env"))
 
     INSTALLED_APPS = (
         'django.contrib.admin',
