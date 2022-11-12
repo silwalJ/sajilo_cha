@@ -7,15 +7,18 @@ from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.views import APIView
 from sajilo.core.pagination import CustomPagination
+from django.contrib.auth import get_user_model
 
 
 from sajilo.users.api.v1.serializers import (
+    DoctorSerializer,
+    PatientSerializer,
     UserRegistrationSerializer,
     DoctorLoginSerializer,
     PatientLoginSerializer,
     UserSerializer,
 )
-from sajilo.users.models import Role, User
+from sajilo.users.models import USER_TYPE, Doctor, Patient, Role, User
 
 class UserRegistrationView(CreateAPIView):
 
@@ -147,12 +150,54 @@ class PatientLoginView(APIView):
                 },
             )
 
+User = get_user_model()
 @extend_schema(
     operation_id="List all user master data",
     description="List all user master data",
     request=UserSerializer,
 )
-class UserDataList(generics.ListAPIView):
-    queryset = User.objects.all()
+class UserDataList(APIView):
+    permission_classes = ()
     serializer_class = UserSerializer
-    pagination_class = CustomPagination
+
+    def get(self, request):
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data)
+
+@extend_schema(
+    operation_id="List patient user master data",
+    description="List patient user master data",
+    request=PatientSerializer,
+)
+class PatientUserList(APIView):
+    permission_classes = ()
+    serializer_class = PatientSerializer
+
+    def get(self, request):
+        patient_users = Patient.objects.filter(
+            user__user_type=USER_TYPE["PATIENT"]
+        )
+        serializer = PatientSerializer(patient_users, many=True)
+        return Response(
+            {
+                "status": "success",
+                "statusCode": status.HTTP_200_OK,
+                "data": serializer.data,
+                "message": "All patient Users!",
+            },
+        )
+
+@extend_schema(
+    operation_id="List doctor user master data",
+    description="List doctor user master data",
+    request=DoctorSerializer,
+)
+class DoctorUserList(APIView):
+    permission_classes = ()
+    serializer_class = DoctorSerializer
+
+    def get(self, request):
+        doctor = Doctor.objects.all()
+        serializer = DoctorSerializer(doctor, many=True)
+        return Response(serializer.data)

@@ -7,19 +7,17 @@ from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import environ
+ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+# sajilo_cha
+APPS_DIR = ROOT_DIR / "sajilo"
+env = environ.Env()
+env.read_env(str(ROOT_DIR / ".env"))
 
-class Common(Configuration):
-
-    ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
-    # sajilo_cha
-    APPS_DIR = ROOT_DIR / "sajilo"
-    env = environ.Env()
+READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
+if READ_DOT_ENV_FILE:
+# OS environment variables take precedence over variables from .env
     env.read_env(str(ROOT_DIR / ".env"))
-
-    READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=True)
-    if READ_DOT_ENV_FILE:
-    # OS environment variables take precedence over variables from .env
-        env.read_env(str(ROOT_DIR / ".env"))
+class Common(Configuration):
 
     INSTALLED_APPS = (
         'django.contrib.admin',
@@ -32,7 +30,7 @@ class Common(Configuration):
 
         # Third party apps
         'rest_framework',            # utilities for rest apis
-        'rest_framework.authtoken',  # token authentication
+        # 'rest_framework.authtoken',  # token authentication
         'django_filters',            # for filtering rest endpoints
 
         # Your apps
@@ -235,4 +233,4 @@ class Common(Configuration):
         )
     }
 
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+    DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
