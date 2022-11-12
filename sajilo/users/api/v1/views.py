@@ -6,14 +6,16 @@ from rest_framework import generics, status, serializers
 from rest_framework.response import Response
 from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.views import APIView
+from sajilo.core.pagination import CustomPagination
 
 
 from sajilo.users.api.v1.serializers import (
     UserRegistrationSerializer,
     DoctorLoginSerializer,
     PatientLoginSerializer,
+    UserSerializer,
 )
-from sajilo.users.models import User
+from sajilo.users.models import Role, User
 
 class UserRegistrationView(CreateAPIView):
 
@@ -144,3 +146,13 @@ class PatientLoginView(APIView):
                     "message": "something went wrong",
                 },
             )
+
+@extend_schema(
+    operation_id="List all user master data",
+    description="List all user master data",
+    request=UserSerializer,
+)
+class UserDataList(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    pagination_class = CustomPagination
